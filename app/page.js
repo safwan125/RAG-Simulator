@@ -1,103 +1,142 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import React, { useState, useCallback } from "react";
+import ReactFlow, {
+  addEdge,
+  Background,
+  Controls,
+  MiniMap,
+  useNodesState,
+  useEdgesState,
+} from "reactflow";
+import "reactflow/dist/style.css";
+import { BrowserRouter as Router, Route, Routes, Link } from "react-router-dom";
+
+const initialNodes = [
+  { id: "P1", data: { label: "Process P1" }, position: { x: 100, y: 100 }, style: { backgroundColor: "#4F46E5" } },
+  { id: "R1", data: { label: "Resource R1" }, position: { x: 300, y: 100 }, style: { backgroundColor: "#2563EB" } },
+];
+
+const initialEdges = [];
+
+const Navbar = () => (
+  <nav className="bg-gray-900 text-white p-4 flex justify-between">
+    <h1 className="text-xl font-bold">RAG Simulator</h1>
+    <div className="space-x-4">
+      <Link to="/" className="hover:text-gray-300">Home</Link>
+      <Link to="/about" className="hover:text-gray-300">About Us</Link>
+      <Link to="/tutorial" className="hover:text-gray-300">Tutorial</Link>
+    </div>
+  </nav>
+);
+
+const GraphSimulator = () => {
+  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
+  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+
+  const onConnect = useCallback(
+    (connection) => setEdges((eds) => addEdge(connection, eds)),
+    []
+  );
+
+  const addNode = (type) => {
+    const newId = `${type}${nodes.length + 1}`;
+    const newNode = {
+      id: newId,
+      data: { label: `${type} ${newId}` },
+      position: { x: Math.random() * 400, y: Math.random() * 300 },
+      style: { backgroundColor: type === "P" ? "#4F46E5" : "#2563EB" },
+    };
+    setNodes((nds) => [...nds, newNode]);
+  };
+
+  const detectCycle = () => {
+    const graph = {};
+    nodes.forEach((node) => (graph[node.id] = []));
+    edges.forEach((edge) => graph[edge.source].push(edge.target));
+
+    const visited = new Set();
+    const recStack = new Set();
+    const deadlockNodes = new Set();
+
+    const dfs = (node) => {
+      if (recStack.has(node)) {
+        deadlockNodes.add(node);
+        return true;
+      }
+      if (visited.has(node)) return false;
+      visited.add(node);
+      recStack.add(node);
+      for (let neighbor of graph[node] || []) {
+        if (dfs(neighbor)) {
+          deadlockNodes.add(node);
+          return true;
+        }
+      }
+      recStack.delete(node);
+      return false;
+    };
+
+    let deadlockDetected = false;
+    for (let node in graph) {
+      if (!visited.has(node) && dfs(node)) {
+        deadlockDetected = true;
+      }
+    }
+
+    setNodes((nds) =>
+      nds.map((node) =>
+        deadlockNodes.has(node.id)
+          ? { ...node, style: { backgroundColor: "#DC2626", color: "white" } }
+          : { ...node, style: { backgroundColor: node.id.startsWith("P") ? "#4F46E5" : "#2563EB" } }
+      )
+    );
+
+    alert(deadlockDetected ? "Deadlock Detected!" : "No Deadlock Detected!");
+  };
+
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              app/page.js
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+    <div className="flex h-screen flex-col">
+      <Navbar />
+      <div className="flex-grow flex items-center justify-center bg-gradient-to-br from-gray-800 to-gray-900 text-white">
+        <div className="w-4/5 h-5/6 bg-white border border-gray-300 rounded-xl shadow-2xl p-6 flex flex-col">
+          <h1 className="text-center text-3xl font-bold text-gray-800 mb-4">Resource Allocation Graph Simulator</h1>
+          <div className="flex h-full">
+            <div className="w-72 p-5 bg-gray-200 border-r border-gray-300 rounded-l-xl flex flex-col gap-4">
+              <button className="bg-green-600 text-white py-2 px-4 rounded-md shadow-md hover:bg-green-500 transition" onClick={() => addNode("P")}>➕ Add Process</button>
+              <button className="bg-blue-600 text-white py-2 px-4 rounded-md shadow-md hover:bg-blue-500 transition" onClick={() => addNode("R")}>➕ Add Resource</button>
+              <button className="bg-red-600 text-white py-2 px-4 rounded-md shadow-md hover:bg-red-500 transition" onClick={detectCycle}>⚠️ Check Deadlock</button>
+            </div>
+            <div className="flex-grow h-full bg-gray-50 border border-gray-300 rounded-r-xl p-4">
+              <ReactFlow 
+                nodes={nodes} 
+                edges={edges} 
+                onNodesChange={onNodesChange} 
+                onEdgesChange={onEdgesChange} 
+                onConnect={onConnect} 
+                fitView
+              >
+                <Background color="#ddd" gap={16} />
+                <Controls />
+                <MiniMap nodeColor={(node) => (node.style.backgroundColor || "#4F46E5")} maskColor="#E5E7EB" />
+              </ReactFlow>
+            </div>
+          </div>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+      </div>
     </div>
   );
-}
+};
+
+
+const App = () => (
+  <Router>
+    <Routes>
+      <Route path="/" element={<GraphSimulator />} />
+      {/* <Route path="/about" element={<AboutUs />} /> */}
+      {/* <Route path="/tutorial" element={<Tutorial />} /> */}
+    </Routes>
+  </Router>
+);
+
+export default App;
