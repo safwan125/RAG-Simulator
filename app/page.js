@@ -40,6 +40,10 @@ const GraphSimulator = () => {
   );
 
   const addNode = (type) => {
+    if (nodes.length >= 10) {
+      alert("Maximum node limit reached!");
+      return;
+    }
     const newId = `${type}${nodes.length + 1}`;
     const newNode = {
       id: newId,
@@ -49,6 +53,7 @@ const GraphSimulator = () => {
     };
     setNodes((nds) => [...nds, newNode]);
   };
+  
 
   const detectCycle = () => {
     const graph = {};
