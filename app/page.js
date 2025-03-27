@@ -127,14 +127,36 @@ const GraphSimulator = () => {
     </div>
   );
 };
+const AboutUs = () => (
+  <div className="flex flex-col h-screen">
+    <Navbar />
+    <div className="flex-grow flex flex-col items-center justify-center bg-gray-800 text-white p-10">
+      <h1 className="text-3xl font-bold">About Us</h1>
+      <p className="mt-4 max-w-2xl text-center">
+        Welcome to the <strong>Resource Allocation Graph (RAG) Simulator</strong>! We provide an interactive way to learn about deadlock detection and resource allocation.
+      </p>
+    </div>
+  </div>
+);
 
+const Tutorial = () => (
+  <div className="flex flex-col h-screen">
+    <Navbar />
+    <div className="flex-grow flex flex-col items-center justify-center bg-gray-800 text-white p-10">
+      <h1 className="text-3xl font-bold">Tutorial</h1>
+      <p className="mt-4 max-w-2xl text-center">
+        Learn how to use the simulator: Add processes, allocate resources, and check for deadlocks in real time.
+      </p>
+    </div>
+  </div>
+);
 
 const App = () => (
   <Router>
     <Routes>
       <Route path="/" element={<GraphSimulator />} />
-      {/* <Route path="/about" element={<AboutUs />} /> */}
-      {/* <Route path="/tutorial" element={<Tutorial />} /> */}
+      <Route path="/about" element={<AboutUs />} />
+      <Route path="/tutorial" element={<Tutorial />} />
     </Routes>
   </Router>
 );
