@@ -56,39 +56,28 @@ const GraphSimulator = () => {
   
 
   const detectCycle = () => {
-    const graph = {};
-    nodes.forEach((node) => (graph[node.id] = []));
+    const graph = Object.fromEntries(nodes.map((node) => [node.id, []]));
     edges.forEach((edge) => graph[edge.source].push(edge.target));
-
-    const visited = new Set();
-    const recStack = new Set();
-    const deadlockNodes = new Set();
-
+  
+    const visited = new Set(), recStack = new Set(), deadlockNodes = new Set();
+    
     const dfs = (node) => {
       if (recStack.has(node)) {
         deadlockNodes.add(node);
         return true;
       }
       if (visited.has(node)) return false;
+      
       visited.add(node);
       recStack.add(node);
       for (let neighbor of graph[node] || []) {
-        if (dfs(neighbor)) {
-          deadlockNodes.add(node);
-          return true;
-        }
+        if (dfs(neighbor)) deadlockNodes.add(node);
       }
       recStack.delete(node);
-      return false;
     };
-
-    let deadlockDetected = false;
-    for (let node in graph) {
-      if (!visited.has(node) && dfs(node)) {
-        deadlockDetected = true;
-      }
-    }
-
+  
+    nodes.forEach((node) => !visited.has(node.id) && dfs(node.id));
+  
     setNodes((nds) =>
       nds.map((node) =>
         deadlockNodes.has(node.id)
@@ -96,9 +85,10 @@ const GraphSimulator = () => {
           : { ...node, style: { backgroundColor: node.id.startsWith("P") ? "#4F46E5" : "#2563EB" } }
       )
     );
-
-    alert(deadlockDetected ? "Deadlock Detected!" : "No Deadlock Detected!");
+  
+    alert(deadlockNodes.size ? "Deadlock Detected!" : "No Deadlock Detected!");
   };
+  
 
   return (
     <div className="flex h-screen flex-col">
