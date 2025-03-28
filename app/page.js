@@ -46,12 +46,25 @@ const GraphSimulator = () => {
     }
   }, [setEdges]);
 
+  const onNodeDoubleClick = useCallback((event, node) => {
+    event.stopPropagation();
+    if (window.confirm(`Do you want to delete the node "${node.data.label}"?`)) {
+      // Remove the node
+      setNodes((nds) => nds.filter((n) => n.id !== node.id));
+      
+      // Remove any edges connected to this node
+      setEdges((eds) => 
+        eds.filter((e) => e.source !== node.id && e.target !== node.id)
+      );
+    }
+  }, [setNodes, setEdges]);
+
   const addNode = (type) => {
     if (nodes.length >= 10) {
       alert("Maximum node limit reached!");
       return;
     }
-    const newId = `${type}${nodes.length + 1}`;
+    const newId = `${nodes.length + 1}`;
     const newNode = {
       id: newId,
       data: { label: `${type} ${newId}` },
@@ -103,8 +116,8 @@ const GraphSimulator = () => {
           <h1 className="text-center text-3xl font-bold text-gray-800 mb-4">Resource Allocation Graph Simulator</h1>
           <div className="flex h-full">
             <div className="w-72 p-5 bg-gray-200 border-r border-gray-300 rounded-l-xl flex flex-col gap-4">
-              <button className="bg-green-600 text-white py-2 px-4 rounded-md shadow-md hover:bg-green-500 transition" onClick={() => addNode("P")}>➕ Add Process</button>
-              <button className="bg-blue-600 text-white py-2 px-4 rounded-md shadow-md hover:bg-blue-500 transition" onClick={() => addNode("R")}>➕ Add Resource</button>
+              <button className="bg-green-600 text-white py-2 px-4 rounded-md shadow-md hover:bg-green-500 transition" onClick={() => addNode("Process")}>➕ Add Process</button>
+              <button className="bg-blue-600 text-white py-2 px-4 rounded-md shadow-md hover:bg-blue-500 transition" onClick={() => addNode("Resource")}>➕ Add Resource</button>
               <button className="bg-red-600 text-white py-2 px-4 rounded-md shadow-md hover:bg-red-500 transition" onClick={detectCycle}>⚠️ Check Deadlock</button>
             </div>
             <div className="flex-grow h-full bg-gray-50 border border-gray-300 rounded-r-xl p-4">
@@ -114,7 +127,8 @@ const GraphSimulator = () => {
                 onNodesChange={onNodesChange} 
                 onEdgesChange={onEdgesChange} 
                 onConnect={onConnect} 
-                onEdgeClick={onEdgeClick}  // Added this line to pass the onEdgeClick handler
+                onEdgeClick={onEdgeClick}
+                onNodeDoubleClick={onNodeDoubleClick}  // Added node double-click handler
                 fitView
               >
                 <Background color="#ddd" gap={16} />
