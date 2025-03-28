@@ -39,6 +39,13 @@ const GraphSimulator = () => {
     []
   );
 
+  const onEdgeClick = useCallback((event, edge) => {
+    event.stopPropagation();
+    if (window.confirm("Do you want to delete this edge?")) {
+      setEdges((eds) => eds.filter((e) => e.id !== edge.id));
+    }
+  }, [setEdges]);
+
   const addNode = (type) => {
     if (nodes.length >= 10) {
       alert("Maximum node limit reached!");
@@ -53,7 +60,6 @@ const GraphSimulator = () => {
     };
     setNodes((nds) => [...nds, newNode]);
   };
-  
 
   const detectCycle = () => {
     const graph = Object.fromEntries(nodes.map((node) => [node.id, []]));
@@ -88,7 +94,6 @@ const GraphSimulator = () => {
   
     alert(deadlockNodes.size ? "Deadlock Detected!" : "No Deadlock Detected!");
   };
-  
 
   return (
     <div className="flex h-screen flex-col">
@@ -109,6 +114,7 @@ const GraphSimulator = () => {
                 onNodesChange={onNodesChange} 
                 onEdgesChange={onEdgesChange} 
                 onConnect={onConnect} 
+                onEdgeClick={onEdgeClick}  // Added this line to pass the onEdgeClick handler
                 fitView
               >
                 <Background color="#ddd" gap={16} />
@@ -122,6 +128,7 @@ const GraphSimulator = () => {
     </div>
   );
 };
+
 const AboutUs = () => (
   <div className="flex flex-col h-screen">
     <Navbar />
